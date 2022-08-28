@@ -26,7 +26,7 @@ def search_sentence(word):
     found_sentence = []
 
     for sentence_dict in sentences:
-        if word in sentence_dict.get('text'):
+        if word.lower() in sentence_dict.get('text').lower():
             found_sentence.append(sentence_dict.get('text'))
 
     if len(found_sentence) > 0:
