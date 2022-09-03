@@ -19,15 +19,36 @@ sentences = [
      "level": 2}
 ]
 
-# {'chat_id': chat_id, 'text': last_messages}
+
+users = []
 
 
-def search_sentence(word):
+def check_user(new_user: dict):
+    for user in users:
+        if new_user.get('id') == user.get('id'):
+            return True
+        else:
+            return False
+
+
+def write_new_user(user_data: dict, text: int):
+    user_data['lvl'] = int(text)
+    users.append(user_data)
+
+
+def find_user_lvl(id):
+    for user in users:
+        if id == user.get('id'):
+            return user.get('lvl')
+
+def search_sentence(word, id):
     found_sentence = []
+    found_user_lvl = find_user_lvl(id)
 
     for sentence_dict in sentences:
-        if word.lower() in sentence_dict.get('text').lower():
-            found_sentence.append(sentence_dict.get('text'))
+        if found_user_lvl == sentence_dict.get('level'):
+            if word.lower() in sentence_dict.get('text').lower():
+                found_sentence.append(sentence_dict.get('text'))
 
     if len(found_sentence) > 0:
         return found_sentence
