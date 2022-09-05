@@ -66,8 +66,8 @@ while True:
 	user_data, chat_id, message_id, last_text = get_message_data(new_data)
 	cheked_user = check_user(user_data)
 
-
 	if not cheked_user:
+		print(f'CHECKED_USER: {cheked_user}')
 		send_lvl_req(root_url, token, chat_id)
 		added_user_lvl = get_level(message_id)
 		write_new_user(user_data, added_user_lvl)

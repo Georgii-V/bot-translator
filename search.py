@@ -23,17 +23,20 @@ sentences = [
 users = []
 
 
-def check_user(new_user: dict):
+def check_user(new_user: dict): 
+    is_user = False
+
     for user in users:
         if new_user.get('id') == user.get('id'):
-            return True
-        else:
-            return False
+            is_user = True
+    print(f'IS_USER: {is_user}')
+    return is_user
 
 
 def write_new_user(user_data: dict, text: int):
     user_data['lvl'] = int(text)
     users.append(user_data)
+
 
 
 def find_user_lvl(id):
