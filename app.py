@@ -1,9 +1,9 @@
 import requests
 import re
 
+from bot_token import token
 from search import fill_matched_sentences, write_new_user, create_result_message, check_user
 
-token = '5575207027:AAEy_tAw2p11W2lnSyz0rx1DFJhGEfGJ2Qk'
 positive_codes = (200, 201, 202, 203, 204)
 
 
@@ -33,7 +33,6 @@ class Bot:
 	def process_message(self, message: str, user: dict)->str:
 		if message == '/start':
 			message = 'Please, let me know your English level.\nFor this use command:\n/level_?\n? = your level\nLevels:\n0 - Beginner\n1 - Intermediate\n2 - Advanced'
-
 
 		elif re.match(r'/level_[123]', message):
 			level = message[-1]
@@ -66,7 +65,6 @@ class Bot:
 			user = last_message.get('message').get('from')
 			is_user = check_user(user)
 			message_id = last_message["message"]["message_id"]
-
 			last_message_text = last_message["message"]["text"]
 			chat_id = last_message["message"]["chat"]["id"]
 
