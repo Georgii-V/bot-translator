@@ -1,0 +1,5 @@
+# Ignore system file
+__pycache__/
+
+# ignore token
+token.py
