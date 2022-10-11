@@ -23,39 +23,49 @@ sentences = [
 users = []
 
 
+def find_user_lvl(new_user):
+    new_user_id = new_user.get('id')
+    for user in users:
+        if new_user_id == user.get('id'):
+            return user.get('lvl')
+
+
+def fill_matched_sentences(message, user, sentences = sentences)->list:
+    matched_sentences = []
+
+    for sentence in sentences:
+        user_lvl = find_user_lvl(user)
+        sentences_lvl = sentence.get("level")
+        sentences_txt = sentence.get("text")
+
+        if  sentences_lvl == user_lvl:
+            if message.lower() in sentences_txt.lower():
+                matched_sentences.append(sentences_txt)
+    return matched_sentences
+
+
 def check_user(new_user: dict): 
     is_user = False
 
     for user in users:
         if new_user.get('id') == user.get('id'):
             is_user = True
-    print(f'IS_USER: {is_user}')
     return is_user
 
 
-def write_new_user(user_data: dict, text: int):
-    user_data['lvl'] = int(text)
+def write_new_user(user_data: dict, level: str):
+    user_data['lvl'] = int(level)
     users.append(user_data)
 
 
-
-def find_user_lvl(id):
-    for user in users:
-        if id == user.get('id'):
-            return user.get('lvl')
-
-def search_sentence(word, id):
-    found_sentence = []
-    found_user_lvl = find_user_lvl(id)
-
-    for sentence_dict in sentences:
-        if found_user_lvl == sentence_dict.get('level'):
-            if word.lower() in sentence_dict.get('text').lower():
-                found_sentence.append(sentence_dict.get('text'))
-
-    if len(found_sentence) > 0:
-        return found_sentence
-    else:
-        found_sentence.append('Nothing was found')
-        return found_sentence
+def create_result_message(matched_sentences:list)->str:
+    result_message = ""
+    if not matched_sentences:
+        result_message = "Sorry, not found sentences for your request"
+    if len(matched_sentences) == 1:
+        result_message = matched_sentences[0]
+    if len(matched_sentences) > 1:
+            for x in matched_sentences:
+                result_message += x + "\n...\n"
+    return result_message
 

@@ -1,83 +1,85 @@
 import requests
 
-# arg = Receive word
-from search import search_sentence, check_user, write_new_user
-
-
-root_url = 'https://api.telegram.org/bot'
+from search import fill_matched_sentences, write_new_user, create_result_message, check_user
+ 
 token = '5575207027:AAEy_tAw2p11W2lnSyz0rx1DFJhGEfGJ2Qk'
 positive_codes = (200, 201, 202, 203, 204)
 
+class Bot:
+	root_url = 'https://api.telegram.org/bot'
 
-def get_update(root_url: str, token: str):
-    url = f'{root_url}{token}/getUpdates'
-    res = requests.get(url)
-    if res.status_code in positive_codes:
-        return res.json()
-    else:
-        print(f'bad request {res.status_code}')
+	def __init__(self, token=None):
+		self.token = token
 
+	def get_updates(self):
+		url = f"{self.root_url}{self.token}/getUpdates"
+		res = requests.get(url)
 
-def get_message_data(update_dict: dict):
-	last_message = update_dict.get('result')[-1]
-	user_data = last_message.get('message').get('from') # USER
-	chat_id = last_message.get('message').get('chat').get('id')
-	message_id = last_message.get('message').get('message_id')
-	last_text = last_message.get('message').get('text')
-	return user_data, chat_id, message_id, last_text
+		if res.status_code in positive_codes:
+			updates = res.json()
+			return updates
 
+	def send_message(self, chat_id, message):
+		url = f"{self.root_url}{self.token}/sendMessage"
+		res = requests.post(url, data={'chat_id': chat_id, "text": message})
+		if res.status_code in positive_codes:
+			return True
+		else:
+			print(f"Request failed with status_code {res.status_code}")
+			return False
 
-def search_word(text: str, user: dict):
-	id = user.get('id')
-	found = search_sentence(text, id)
-	return found
+	def process_message(self, message:str, user:dict)->str:
+		if message == '/start':
+			message = 'Please, let me know your English level.\nFor this use command:\n/level_?\n? = your level\nLevels:\n0 - Beginner\n1 - Intermediate\n2 - Advanced'
+		
+		elif '/level_' in message:
+			level = message[-1]
+			if int(level) in range(3):
+				write_new_user(user, level)
+				message = f'Great, your level is {level}, now send me your word'
+			else:
+				message = 'Incorrect level'
 
+		elif '/*' in message:
+			message = 'Command not found'
+		else:
+			matched_sentences = fill_matched_sentences(message, user)
+			message = create_result_message(matched_sentences)
+		
+		return message
 
-def send_message(root_url: str, token: str, chat_id: int, found_text: list):
-	prepared_res = '\n'.join(found_text)
-	to_send = requests.post(f'{root_url}{token}/sendMessage', data = {'chat_id': chat_id, 'text': prepared_res})
-	return to_send
+	def poolling(self):
+		last_message_id = 0
+		unlogged_users = []
 
+		while True:
+			updates = self.get_updates()
+			messages = updates["result"]
 
-def send_lvl_req(root_url: str, token: str, chat_id: int):
-	to_send = requests.post(f'{root_url}{token}/sendMessage', data = {'chat_id': chat_id, 'text': 'Enter your level'})
-	return to_send
+			if len(messages) < 1:
+				continue
 
-
-def get_level(old_message_id):
-	new_message_id = old_message_id
-
-	while old_message_id == new_message_id:
-		new_data = get_update(root_url, token) 
-		user_data, chat_id, message_id, last_text = get_message_data(new_data)
-
-		new_message_id = message_id
-		if new_message_id > old_message_id:
-			return int(last_text)
-
-
-
-last_message_id = 0
-print(last_message_id)
-
-
-while True:
-	new_data = get_update(root_url, token) 
-	user_data, chat_id, message_id, last_text = get_message_data(new_data)
-	cheked_user = check_user(user_data)
-
-	if not cheked_user:
-		print(f'CHECKED_USER: {cheked_user}')
-		send_lvl_req(root_url, token, chat_id)
-		added_user_lvl = get_level(message_id)
-		write_new_user(user_data, added_user_lvl)
-
-	else:
-		if message_id > last_message_id:
-			found_sentence = search_word(last_text, user_data)
-			send_message(root_url, token, chat_id, found_sentence)
-			last_message_id = message_id
+			last_message = updates["result"][-1]
+			user = last_message.get('message').get('from')
+			is_user = check_user(user)
+			message_id = last_message["message"]["message_id"]
+			
+			last_message_text = last_message["message"]["text"]
+			chat_id = last_message["message"]["chat"]["id"]	
 
 
+			if not is_user:
+				if not user in unlogged_users:
+					warning_text = 'WWW\nPlease, let me know your English level.\nFor this use command:\n/level_?\n? = your level\nLevels:\n0 - Beginner\n1 - Intermediate\n2 - Advanced'
+					self.send_message(chat_id, warning_text)
+					unlogged_users.append(user)
 
-# print(found_sentence)
+
+			if message_id > last_message_id:
+				message_to_user = self.process_message(last_message_text, user)
+				self.send_message(chat_id, message_to_user)
+				last_message_id = message_id
+
+
+bot = Bot(token)
+bot.poolling()
